@@ -1,0 +1,17 @@
+.markers table thead {
+	background-color: black;
+	color: white;
+}
+.markers table {
+	width: 100%;
+	padding: 20px;
+}
+.markers {
+	width: 100%;
+	padding: 20px;
+}
+.markersControls {
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+}

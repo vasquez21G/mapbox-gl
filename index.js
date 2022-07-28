@@ -8,16 +8,12 @@ mapboxgl.accessToken =
 
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
+app.use(express.static('scripts'))
 app.use(express.urlencoded({ extended: true }))
 
 app.get('/', (req, res) => {
-	res.setHeader('Access-Control-Allow-Origin', '*')
-	res.send(`
-		<!DOCTYPE html>
-	<button id="save()">Click me</button>
-	<script>${map.save}</script>
-	</html>
-	`)
+	// res.setHeader('Access-Control-Allow-Origin', '*')
+	res.render('index', { tokenID: mapboxgl.accessToken })
 })
 
 app.listen(3000, () => {
