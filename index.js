@@ -12,7 +12,7 @@ app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 
 app.get('/', (req, res) => {
-	// res.setHeader('Access-Control-Allow-Origin', '*')
+	res.setHeader('Access-Control-Allow-Origin', '*')
 	res.render('index', { tokenID: mapboxgl.accessToken })
 })
 

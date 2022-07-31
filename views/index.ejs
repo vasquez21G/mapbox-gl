@@ -30,11 +30,13 @@
 			</h1>
 		</div>
 
-		<div class="m-2 mt-5 flex flex-row flex-grow gap-4">
+		<div class="m-2 mt-5 flex flex-row flex-grow flex-1 gap-4">
 			<div
-				class="min-w-max max-w-xl bg-white border drop-shadow-xl rounded-md 2 p-6 self-start"
+				class="flex flex-col min-w-max max-w-xl bg-white border drop-shadow-xl rounded-md 2 p-6"
 			>
-				<h1 class="flex-auto text-lg font-semibold text-slate-700">
+				<h1
+					class="flex-auto text-lg font-semibold text-slate-700 self-center"
+				>
 					Create New Marker
 				</h1>
 				<div class="gap-2 grid grid-cols-1 mt-3">
@@ -85,11 +87,11 @@
 				</table>
 			</div>
 			<div
-				class="min-w-max max-w-xl bg-white border drop-shadow-xl rounded-md self-start p-6 flex flex-col"
+				class="min-h-full bg-white border drop-shadow-xl rounded-md self-start p-6 flex flex-col"
 			>
-				<h1>Counter Markers</h1>
+				<h1 class="font-semibold text-slate-700">Counter Markers</h1>
 				<h1
-					class="text-6xl text-center self-center text-slate-600"
+					class="text-6xl text-center self-center text-slate-600 p-5 m-auto"
 					id="counterMarkers"
 				>
 					0
@@ -110,14 +112,24 @@
 		})
 		return map
 	}
-	function setMarker(lng, lat, containerID) {
+	function setMarker(lng, lat, containerID, element) {
 		try {
 			const marker = new mapboxgl.Marker({
 				draggable: true,
+				element: element,
 			})
 				.setLngLat([lng, lat])
 				.addTo(containerID)
-			getMarkers(marker)
+
+			marker.on('dragend', function (e) {
+				getMarkers(marker, true)
+			})
+
+			getMarkers(marker, false, false)
+			document.getElementById('iLat').value = ''
+			document.getElementById('iLng').value = ''
+			document.getElementById('markerName').value = ''
+
 			return marker
 		} catch (error) {
 			console.error(error)
@@ -128,29 +140,32 @@
 		try {
 			const lat = document.getElementById('iLat').value
 			const lng = document.getElementById('iLng').value
-			const marker = setMarker(lat, lng, map)
+			const element = document.createElement('div')
+			element.style = 'border-radius: 50%; width: 30px; height: 30px;'
+			element.style.backgroundImage =
+				'url("https://avatars.githubusercontent.com/u/9813715?v=4")'
+			element.style.backgroundSize = 'cover'
+			element.style.backgroundPosition = 'center'
+			element.style.backgroundRepeat = 'no-repeat'
+			element.className = 'text-white text-center'
+			element.id = new Date().getTime()
 
-			marker.on('dragend', function (e) {
-				console.log(marker.getLngLat())
-			})
+			const marker = setMarker(lat, lng, map, element)
 		} catch (error) {
 			console.log(error)
 		}
 	})
 	const counterMarkers = document.getElementById('counterMarkers')
-	function getMarkers(marker) {
-		document
-			.getElementById('tBMarkers')
-			.querySelectorAll('tr')
-			.forEach((tr) => {
-				tr.remove()
-			})
-		markers.push({
-			name: document.getElementById('markerName').value,
-			lng: marker.getLngLat().lng,
-			lat: marker.getLngLat().lat,
-		})
-		markers.forEach(function (marker) {
+	function getMarkers(marker, update, rem) {
+		if (marker !== null && update == false && rem == false) {
+			const m = {
+				id: 'mk-' + marker.getElement().id,
+				name: document.getElementById('markerName').value,
+				lng: marker.getLngLat().lng,
+				lat: marker.getLngLat().lat,
+			}
+			markers.push(m)
+
 			const table = document.getElementById('tBMarkers')
 			const row = document.createElement('tr')
 			const name = document.createElement('td')
@@ -158,31 +173,59 @@
 			const tdlat = document.createElement('td')
 			const controls = document.createElement('td')
 			const btnDelete = document.createElement('button')
-			const btnEdit = document.createElement('button')
 
 			tdlat.classList.add('pl-2')
 			tdlng.classList.add('pl-2')
 			name.classList.add('pl-2')
-			btnDelete.classList.add('bg-red-100', 'text-red-400', 'p-2')
-			btnEdit.classList.add('bg-sky-100', 'text-sky-600', 'p-2')
+			btnDelete.classList.add('bg-red-100', 'text-red-400', 'p-2', 'm-1')
+			row.classList.add('text-sky-900', 'p-2')
 			controls.classList.add('pl-2')
 
-			name.innerHTML = marker.name
-			tdlng.innerHTML = marker.lng
-			tdlat.innerHTML = marker.lat
+			name.innerHTML = m.name
+			tdlng.innerHTML = m.lng
+			tdlat.innerHTML = m.lat
+			row.id = m.id
 			btnDelete.innerHTML = 'Delete'
-			btnEdit.innerHTML = 'Edit'
+			btnDelete.onclick = () => removeMarker(marker, m)
 
-			controls.append(btnDelete, btnEdit)
+			controls.append(btnDelete)
 			row.append(name, tdlng, tdlat, controls)
 			table.appendChild(row)
-		})
+		}
+
+		if (marker !== null && update == true) {
+			const element = markers.find(
+				(m) => m.id == 'mk-' + marker.getElement().id,
+			)
+
+			markers.splice(markers.indexOf(element), 1, {
+				id: element.id,
+				name: element.name,
+				lng: marker.getLngLat().lng,
+				lat: marker.getLngLat().lat,
+			})
+
+			const table = document.getElementById('tBMarkers')
+			const row = document.getElementById(element.id)
+			const tdlng = row.getElementsByTagName('td')[1]
+			const tdlat = row.getElementsByTagName('td')[2]
+			tdlng.innerHTML = marker.getLngLat().lng
+			tdlat.innerHTML = marker.getLngLat().lat
+		}
 
 		counterMarkers.innerHTML = markers.length
+	}
+	function removeMarker(marker, m) {
+		try {
+			marker.remove()
+		} catch (error) {}
+		const table = document.getElementById('tBMarkers')
+		const row = document.getElementById(m.id)
+		table.removeChild(row)
 
-		document.querySelectorAll('inputs').forEach(function (input) {
-			input.reset()
-		})
+		const found = markers.find((el) => el.id == m.id)
+		markers.splice(markers.indexOf(found), 1)
+		counterMarkers.innerHTML = markers.length
 	}
 	let markers = []
 </script>
